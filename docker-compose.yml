@@ -1,12 +1,21 @@
 version: '3.9'
 
 services:
-    fiber-boilerplate:
-        deploy:
-            replicas: 1
-        build: .
-        env_file:
-            - ./config.env
+
+    dev:
+        image: cosmtrek/air
+        working_dir: /root/app
+        volumes:
+            - .:/root/app
+            - gopath:/go
+        tmpfs:
+            - /root/app/tmp:exec
         tty: true
+        env_file:
+            - secret.env
         ports:
-            - 3001:3000
+            - 3000:3000
+        restart: unless-stopped
+
+volumes:
+    gopath:

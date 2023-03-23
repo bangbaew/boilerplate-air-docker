@@ -5,9 +5,12 @@ import (
 	"boilerplate/handlers"
 
 	"flag"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
@@ -18,6 +21,8 @@ var (
 )
 
 func main() {
+	fmt.Printf("Secret username is: %s\n", os.Getenv("USERNAME"))
+	fmt.Printf("Secret password is: %s\n", os.Getenv("PASSWORD"))
 	// Parse command-line flags
 	flag.Parse()
 
@@ -31,7 +36,9 @@ func main() {
 
 	// Middleware
 	app.Use(recover.New())
-	app.Use(logger.New())
+	app.Use(logger.New(logger.Config{
+		TimeZone: "Asia/Bangkok",
+	}))
 
 	// Create a /api/v1 endpoint
 	v1 := app.Group("/api/v1")
@@ -39,6 +46,15 @@ func main() {
 	// Bind handlers
 	v1.Get("/users", handlers.UserList)
 	v1.Post("/users", handlers.UserCreate)
+
+	app.Use(basicauth.New(basicauth.Config{
+		Users: map[string]string{
+			os.Getenv("USERNAME"): os.Getenv("PASSWORD"),
+		},
+	}))
+	app.Get("/hello", func(c *fiber.Ctx) error {
+		return c.SendString("Hello World!")
+	})
 
 	// Setup static files
 	app.Static("/", "./static/public")
